@@ -6,9 +6,9 @@ import pygame
 # Class pour le carré orange
 class Player(object):
     
-    def __init__(self, walls):
+    def __init__(self, walls, pos):
         self.walls = walls
-        self.rect = pygame.Rect(32, 32, 16, 16)
+        self.rect = pygame.Rect(pos[0], pos[1], 16, 16)
     
     def SetWalls(self, walls):
         self.walls = walls
@@ -48,33 +48,53 @@ class Wall(object):
 
 class Lab(object):
 
-    def __init__(self, grille : list) -> None:
-        # Initialise pygame
+    def Calc_sizes(self):
+        """Prend en paramètre une grille
+        et calcule la taille de la fenètre (pixel)
+        et la taille des block (mur)"""
+        l = len(self.level[0])
+        h = len(self.level)
+
+        #TODO: condition si trop grand (réduire taille des block)
+        self.block_size = 16
+        self.fn_size = (l*16, h*16)
+
+    def __init__(self, grille : list, speed = 2) -> None:
+        # Initialisation de pygame
         os.environ["SDL_VIDEO_CENTERED"] = "1"
         pygame.init()
 
-        # Set up the display
+        # const vistesse
+        self.speed = speed
+
+        #calcule de la taille de la fenetre et des blocs
+        self.level = grille
+        self.Calc_sizes()
+
+        # Création de la fenetre
         pygame.display.set_caption("Get to the red square!")
-        self.screen = pygame.display.set_mode((320, 240))
+        self.screen = pygame.display.set_mode(self.fn_size)
         
         self.clock = pygame.time.Clock()
-        self.walls = [] # List to hold the walls
+        self.walls = [] # Liste des murs
 
-        self.level = grille
 
-        # Parse the level string above. W = wall, E = exit
-        self.x = self.y = 0
+        # Ajout des murs depuis la grille
+        lg = self.block_size
+        x = y = 0
         for row in self.level:
             for col in row:
                 if col == "W":
-                    Wall((self.x, self.y), self.walls)
-                if col == "E":
-                    self.end_rect = pygame.Rect(self.x, self.y, 16, 16)
-                self.x += 16
-            self.y += 16
-            self.x = 0
+                    Wall((x, y), self.walls)
+                elif col == "E":
+                    self.end_rect = pygame.Rect(x, y, lg, lg)
+                elif col == "S":
+                    self.player_pos = (x,y)
+                x += lg
+            y += lg
+            x = 0
 
-        self.player = Player(self.walls) # Create the player
+        self.player = Player(self.walls, self.player_pos) # Create the player
         
     def Stop(self):
         self.running = False
@@ -98,15 +118,16 @@ class Lab(object):
             # Move the player if an arrow key is pressed
             key = pygame.key.get_pressed()
             # self.player.SetWalls(self.walls)
+            s = self.speed
+            #TODO: mode de déplacement par bloc (speed = block_size + realese key pour faire un autre mouv)
             if key[pygame.K_LEFT]:
-                self.player.move(-2, 0)
+                self.player.move(-s, 0)
             if key[pygame.K_RIGHT]:
-                self.player.move(2, 0)
+                self.player.move(s, 0)
             if key[pygame.K_UP]:
-                self.player.move(0, -2)
+                self.player.move(0, -s)
             if key[pygame.K_DOWN]:
-                self.player.move(0, 2)
-            #FIXME: créer const speed
+                self.player.move(0, s)
             
         
             # Just added this to make it slightly fun ;)
@@ -129,21 +150,21 @@ class Lab(object):
     
 if __name__ == '__main__':
     level = [
-        "WWWWWWWWWWWWWWWWWWWWW",
-        "W                  WW",
-        "W         WWWWWW   WW",
-        "W   WWWW       W   WW",
-        "W   W        WWWW  WW",
-        "W WWW  WWWW        WW",
-        "W   W     W W      WW",
-        "W   W     W   WWW WWW",
-        "W   WWW WWW   W W  WW",
-        "W     W   W   W W  WW",
-        "WWW   W   WWWWW W  WW",
-        "W W      WW        WW",
-        "W W   WWWW   WWW   WW",
-        "W     W    E   W   WW",
-        "WWWWWWWWWWWWWWWWWWWWW",
+        "WWWWWWWWWWWWWWWWWWWW",
+        "W                  W",
+        "W S       WWWWWW   W",
+        "W   WWWW       W   W",
+        "W   W        WWWW  W",
+        "W WWW  WWWW        W",
+        "W   W     W W      W",
+        "W   W     W   WWW WW",
+        "W   WWW WWW   W W  W",
+        "W     W   W   W W  W",
+        "WWW   W   WWWWW W  W",
+        "W W      WW        W",
+        "W W   WWWW   WWW   W",
+        "W     W    E   W   W",
+        "WWWWWWWWWWWWWWWWWWWW",
     ]
-    lab = Lab(level)
+    lab = Lab(level, 16)
     lab.Run()
