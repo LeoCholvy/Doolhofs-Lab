@@ -1,7 +1,6 @@
 import random
 width = 20
 length = 20
-mark = '@'
 maze = {}
 f_maze = []
 for y in range(0, width):
