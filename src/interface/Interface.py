@@ -6,9 +6,10 @@ import pygame
 # Class pour le carré orange
 class Player(object):
     
-    def __init__(self, walls, pos):
+    def __init__(self, walls, pos, size):
         self.walls = walls
-        self.rect = pygame.Rect(pos[0], pos[1], 16, 16)
+
+        self.rect = pygame.Rect(pos[0], pos[1], size, size)
     
     def SetWalls(self, walls):
         self.walls = walls
@@ -42,24 +43,16 @@ class Player(object):
 # Nice class to hold a wall rect
 class Wall(object):
     
-    def __init__(self, pos, walls):
+    def __init__(self, pos, walls, size):
         walls.append(self)
-        self.rect = pygame.Rect(pos[0], pos[1], 16, 16)
+        self.rect = pygame.Rect(pos[0], pos[1], size, size)
 
 class Lab(object):
 
-    def Calc_sizes(self):
-        """Prend en paramètre une grille
-        et calcule la taille de la fenètre (pixel)
-        et la taille des block (mur)"""
-        l = len(self.level[0])
-        h = len(self.level)
-
-        #TODO: condition si trop grand (réduire taille des block)
-        self.block_size = 16
-        self.fn_size = (l*16, h*16)
 
     def __init__(self, grille : list, speed = 2) -> None:
+        self.player_pos = None # si la grille ne contient pas "S"
+        self.moving = False
         # Initialisation de pygame
         os.environ["SDL_VIDEO_CENTERED"] = "1"
         pygame.init()
@@ -72,7 +65,7 @@ class Lab(object):
         self.Calc_sizes()
 
         # Création de la fenetre
-        pygame.display.set_caption("Get to the red square!")
+        pygame.display.set_caption("Trouve la sortie !")
         self.screen = pygame.display.set_mode(self.fn_size)
         
         self.clock = pygame.time.Clock()
@@ -85,7 +78,7 @@ class Lab(object):
         for row in self.level:
             for col in row:
                 if col == "W":
-                    Wall((x, y), self.walls)
+                    Wall((x, y), self.walls, self.block_size)
                 elif col == "E":
                     self.end_rect = pygame.Rect(x, y, lg, lg)
                 elif col == "S":
@@ -93,8 +86,42 @@ class Lab(object):
                 x += lg
             y += lg
             x = 0
+        
+        #pos par défaut du joueur
+        if self.player_pos == None:
+            x = y = 0
+            for row in self.level:
+                for col in row:
+                    if col == " ":
+                        self.player_pos = (x,y)
+                        break
+                    x += lg
+                if self.player_pos != None:
+                    break
+                y += lg
+                x = 0
 
-        self.player = Player(self.walls, self.player_pos) # Create the player
+        self.player = Player(self.walls, self.player_pos, self.player_size) # Create the player
+        
+    def Calc_sizes(self):
+        """Prend en paramètre une grille
+        et calcule la taille de la fenètre (pixel)
+        et la taille des block (mur)"""
+        l = len(self.level[0])
+        h = len(self.level)
+
+        #TODO: condition si trop grand (réduire taille des block)
+        if l > 100 or h > 50:
+            self.block_size = 8
+            self.fn_size = (l*8, h*8)
+            self.player_size = 8
+            self.speed /= 2
+        else:
+            self.block_size = 16
+            self.fn_size = (l*16, h*16)
+            self.player_size = 16
+
+        self.mode_deplacement_par_bloc = self.block_size == self.speed
         
     def Stop(self):
         self.running = False
@@ -114,27 +141,10 @@ class Lab(object):
                     running = False
                 if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
                     running = False
-        
-            # Move the player if an arrow key is pressed
-            key = pygame.key.get_pressed()
-            # self.player.SetWalls(self.walls)
-            s = self.speed
-            #TODO: mode de déplacement par bloc (speed = block_size + realese key pour faire un autre mouv)
-            if key[pygame.K_LEFT]:
-                self.player.move(-s, 0)
-            if key[pygame.K_RIGHT]:
-                self.player.move(s, 0)
-            if key[pygame.K_UP]:
-                self.player.move(0, -s)
-            if key[pygame.K_DOWN]:
-                self.player.move(0, s)
             
-        
-            # Just added this to make it slightly fun ;)
-            if self.player.rect.colliderect(self.end_rect):
-                pygame.quit()
-                sys.exit()
-        
+            #Deplacements
+            self.Move()
+            
             # Draw the scene
             self.screen.fill((0, 0, 0))
             for wall in self.walls:
@@ -144,7 +154,43 @@ class Lab(object):
             # gfxdraw.filled_circle(self.screen, 255, 200, 5, (0,128,0))
             pygame.display.flip()
             self.clock.tick(360)
+
+
+            # lorsque le joueur trouve la fin
+            if self.player.rect.colliderect(self.end_rect):
+                pygame.quit()
+                #TODO: fin du lab
         pygame.quit()
+
+    def Move(self):
+        s = self.speed
+        key = pygame.key.get_pressed()
+        if not self.mode_deplacement_par_bloc:
+            if key[pygame.K_LEFT]:
+                self.player.move(-s, 0)
+            if key[pygame.K_RIGHT]:
+                self.player.move(s, 0)
+            if key[pygame.K_UP]:
+                self.player.move(0, -s)
+            if key[pygame.K_DOWN]:
+                self.player.move(0, s)
+        else:
+            if self.moving == True:
+                if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
+                    return
+                self.moving = False
+                return
+
+            if key[pygame.K_LEFT]:
+                self.player.move(-s, 0)
+            elif key[pygame.K_RIGHT]:
+                self.player.move(s, 0)
+            elif key[pygame.K_UP]:
+                self.player.move(0, -s)
+            elif key[pygame.K_DOWN]:
+                self.player.move(0, s)
+            if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
+                self.moving = True
 
 
     
@@ -166,5 +212,7 @@ if __name__ == '__main__':
         "W     W    E   W   W",
         "WWWWWWWWWWWWWWWWWWWW",
     ]
-    lab = Lab(level, 16)
+    # level = ["W"*100] + ["W"+"S"+" "*97+"W"] + ["W"+" "*98+"W"]*46 + ["W" + "E" + " "*97 + "W"] + ["W"*100]
+    # level = ["W"*120] + ["W"+"S"+" "*117+"W"] + ["W"+" "*118+"W"]*46 + ["W" + "E" + " "*117 + "W"] + ["W"*120]
+    lab = Lab(level, 1)
     lab.Run()
