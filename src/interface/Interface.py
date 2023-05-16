@@ -2,6 +2,7 @@ import os
 import sys
 import pygame
 
+DEFAULT_CONFIG = {"speed": 2}
 
 # Class pour le carré orange
 class Player(object):
@@ -50,15 +51,16 @@ class Wall(object):
 class Lab(object):
 
 
-    def __init__(self, grille : list, speed = 2) -> None:
+    def __init__(self, grille : list) -> None:
         self.player_pos = None # si la grille ne contient pas "S"
         self.moving = False
         # Initialisation de pygame
         os.environ["SDL_VIDEO_CENTERED"] = "1"
         pygame.init()
 
+        config = Get_config()
         # const vistesse
-        self.speed = speed
+        self.speed = config["speed"]
 
         #calcule de la taille de la fenetre et des blocs
         self.level = grille
@@ -192,6 +194,32 @@ class Lab(object):
             if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
                 self.moving = True
 
+def Get_config():
+    try:
+        #lire fichier de config
+        f = open('config.txt','r')
+        texte = f.read()
+        texte = [x.split("=") for x in texte.replace(" ", "").split("\n") if not x[0] == '#']
+        config = {i:eval(j) for i,j in texte}
+        f.close()
+
+        #verification des valeurs
+        if not(isinstance(config["speed"], int) or isinstance(config["speed"], float)):
+            Write_config()
+            return DEFAULT_CONFIG
+        return config
+
+    except:
+        #sinon on créer un fichier de config
+        Write_config()
+        return DEFAULT_CONFIG
+def Write_config():
+    f = open("config.txt", 'w')
+    f.write(
+        "#Recommende: 2,4,8,16 (16=deplacement par case)\n"+
+        "speed = 2"
+    )
+    f.close()
 
     
 if __name__ == '__main__':
@@ -214,5 +242,5 @@ if __name__ == '__main__':
     ]
     # level = ["W"*100] + ["W"+"S"+" "*97+"W"] + ["W"+" "*98+"W"]*46 + ["W" + "E" + " "*97 + "W"] + ["W"*100]
     # level = ["W"*120] + ["W"+"S"+" "*117+"W"] + ["W"+" "*118+"W"]*46 + ["W" + "E" + " "*117 + "W"] + ["W"*120]
-    lab = Lab(level, 1)
+    lab = Lab(level)
     lab.Run()
