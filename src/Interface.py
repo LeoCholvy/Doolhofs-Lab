@@ -1,10 +1,83 @@
 import os
 import sys
 import pygame
-from maze_generator import Maze
-from test_cam import CameraGroup
+# from src.maze_generator import Maze
 
-DEFAULT_CONFIG = {"speed": 2}
+class CameraGroup(pygame.sprite.Group):
+    def __init__(self, lab):
+        super().__init__()
+        self.lab = lab
+
+        self.display_surface = self.lab.surface
+        self.offset = pygame.math.Vector2()
+        self.half_w = self.display_surface.get_size()[0] // 2
+        self.half_h = self.display_surface.get_size()[1] // 2
+
+		# box setup
+        self.camera_borders = {'left': 200, 'right': 200, 'top': 100, 'bottom': 100}
+        l = self.camera_borders['left']
+        t = self.camera_borders['top']
+        w = self.display_surface.get_size()[0]  - (self.camera_borders['left'] + self.camera_borders['right'])
+        h = self.display_surface.get_size()[1]  - (self.camera_borders['top'] + self.camera_borders['bottom'])
+        self.camera_rect = pygame.Rect(l,t,w,h)
+
+		# camera speed
+        self.keyboard_speed = 5
+
+		# zoom 
+        self.zoom_scale = 1
+        self.internal_surf_size = (2500,2500)
+        self.internal_surf = pygame.Surface(self.internal_surf_size, pygame.SRCALPHA)
+        self.internal_rect = self.internal_surf.get_rect(center = (self.half_w,self.half_h))
+        self.internal_surface_size_vector = pygame.math.Vector2(self.internal_surf_size)
+        self.internal_offset = pygame.math.Vector2()
+        self.internal_offset.x = self.internal_surf_size[0] // 2 - self.half_w
+        self.internal_offset.y = self.internal_surf_size[1] // 2 - self.half_h
+
+    def center_target_camera(self,target):
+        self.offset.x = target.rect.centerx - self.half_w
+        self.offset.y = target.rect.centery - self.half_h
+    
+    def box_target_camera(self,target):
+
+        if target.rect.left < self.camera_rect.left:
+            self.camera_rect.left = target.rect.left
+        if target.rect.right > self.camera_rect.right:
+            self.camera_rect.right = target.rect.right
+        if target.rect.top < self.camera_rect.top:
+            self.camera_rect.top = target.rect.top 
+        if target.rect.bottom > self.camera_rect.bottom:
+            self.camera_rect.bottom = target.rect.bottom
+
+        self.offset.x = self.camera_rect.left - self.camera_borders['left']
+        self.offset.y = self.camera_rect.top - self.camera_borders['top']
+
+    def keyboard_control(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_a]: self.camera_rect.x -= self.keyboard_speed
+        if keys[pygame.K_d]: self.camera_rect.x += self.keyboard_speed
+        if keys[pygame.K_w]: self.camera_rect.y -= self.keyboard_speed
+        if keys[pygame.K_s]: self.camera_rect.y += self.keyboard_speed
+
+        self.offset.x = self.camera_rect.left - self.camera_borders['left']
+        self.offset.y = self.camera_rect.top - self.camera_borders['top']
+
+    def custom_draw(self):
+        self.center_target_camera(self.lab.player)
+        self.box_target_camera(self.lab.player)
+
+        self.internal_surf.fill((50,0,255))
+		# active elements
+        for sprite in sorted(self.sprites(),key = lambda sprite: sprite.rect.centery):
+            offset_pos = sprite.rect.topleft - self.offset + self.internal_offset
+            self.internal_surf.blit(sprite.image,offset_pos)
+        
+        scaled_surf = pygame.transform.scale(self.internal_surf,self.internal_surface_size_vector * self.zoom_scale)
+        scaled_rect = scaled_surf.get_rect(center = (self.half_w,self.half_h))
+
+        self.display_surface.blit(scaled_surf,scaled_rect)
+
+DEFAULT_CONFIG = {"speed": 2,"res_h":300,"res_l":600}
 
 # Class pour le carré orange
 class Player(pygame.sprite.Sprite):
@@ -12,7 +85,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, walls, pos, size, group):
         super().__init__(group)
         self.walls = walls
-        self.image = pygame.image.load('graphismes/joueur.png')
+        self.image = pygame.image.load('assets/joueur.png')
         self.image = pygame.transform.scale(self.image,(size,size))
         self.pos = pos
 
@@ -56,7 +129,7 @@ class Wall(pygame.sprite.Sprite):
         super().__init__(group)
         self.pos = pos
         walls.append(self)
-        self.image = pygame.image.load('graphismes/bloc_wall_maze.png')
+        self.image = pygame.image.load('assets/bloc_wall_maze.png')
         self.image = pygame.transform.scale(self.image, (size,size))
         self.rect = pygame.Rect(pos[0], pos[1], size, size)
 
@@ -65,7 +138,8 @@ class End(pygame.sprite.Sprite):
     def __init__(self, pos, size, group):
         super().__init__(group)
         self.pos = pos
-        self.image = pygame.image.load('graphismes/arrivee.png')
+        #FIXME: changer couleur arrivé
+        self.image = pygame.image.load('assets/arrivee.png')
         self.image = pygame.transform.scale(self.image,(size, size))
         self.rect = pygame.Rect(pos[0], pos[1], size, size)
 
@@ -82,6 +156,7 @@ class Lab(object):
         config = Get_config()
         # const vistesse
         self.speed = config["speed"]
+        self.res = (config["res_l"], config["res_h"])
 
         #calcule de la taille de la fenetre et des blocs
         self.level = grille
@@ -95,6 +170,8 @@ class Lab(object):
         self.clock = pygame.time.Clock()
         self.walls = [] # Liste des murs
 
+    def Set_Cam(self, cam):
+        self.camera_group = cam
 
     def ajout_mur(self):
         # Ajout des murs depuis la grille
@@ -103,9 +180,9 @@ class Lab(object):
         for row in self.level:
             for col in row:
                 if col == "W":
-                    Wall((x, y), self.walls, self.block_size,camera_group)
+                    Wall((x, y), self.walls, self.block_size,self.camera_group)
                 elif col == "E":
-                    self.end = End([x,y], lg, camera_group)
+                    self.end = End([x,y], lg, self.camera_group)
                 elif col == "S":
                     self.player_pos = (x,y)
                 x += lg
@@ -126,26 +203,30 @@ class Lab(object):
                 y += lg
                 x = 0
 
-        self.player = Player(self.walls, self.player_pos, self.player_size, camera_group) # Create the player
+        self.player = Player(self.walls, self.player_pos, self.player_size, self.camera_group) # Create the player
         
     def Calc_sizes(self):
         """Prend en paramètre une grille
         et calcule la taille de la fenètre (pixel)
         et la taille des block (mur)"""
-        l = len(self.level[0])
-        h = len(self.level)
+        # l = len(self.level[0])
+        # h = len(self.level)
 
-        #TODO: condition si trop grand (réduire taille des block)
-        if l > 100 or h > 50:
-            self.block_size = 8
-            self.fn_size = (l*8, h*8)
-            self.player_size = 8
-            self.speed /= 2
-        else:
-            self.block_size = 16
-            self.fn_size = (l*16, h*16)
-            self.player_size = 16
+        # if l > 100 or h > 50:
+        #     self.block_size = 8
+        #     self.fn_size = (l*8, h*8)
+        #     self.player_size = 8
+        #     self.speed /= 2
+        # else:
+        #     self.block_size = 16
+        #     self.fn_size = (l*16, h*16)
+        #     self.player_size = 16
 
+        #résolution
+        self.fn_size = self.res
+
+        self.block_size = 16
+        self.player_size = 16
         self.mode_deplacement_par_bloc = self.block_size == self.speed
         
     def Stop(self):
@@ -180,8 +261,8 @@ class Lab(object):
             #self.screen.blit(self.player.image, self.player.rect)
             #pygame.draw.rect(self.screen, (255, 200, 0), self.player.rect)
             # gfxdraw.filled_circle(self.screen, 255, 200, 5, (0,128,0))
-            camera_group.update()
-            camera_group.custom_draw()
+            self.camera_group.update()
+            self.camera_group.custom_draw()
             pygame.display.flip()
             self.clock.tick(360)
 
@@ -189,6 +270,7 @@ class Lab(object):
             # lorsque le joueur trouve la fin
             if self.player.rect.colliderect(self.end.rect):
                 pygame.quit()
+                sys.exit()
                 #TODO: fin du lab
         pygame.quit()
 
@@ -221,8 +303,8 @@ class Lab(object):
                 self.player.move(0, s)
             if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
                 self.moving = True
-        camera_group.offset.x = camera_group.camera_rect.left - camera_group.camera_borders['left']
-        camera_group.offset.y = camera_group.camera_rect.top - camera_group.camera_borders['top']
+        self.camera_group.offset.x = self.camera_group.camera_rect.left - self.camera_group.camera_borders['left']
+        self.camera_group.offset.y = self.camera_group.camera_rect.top - self.camera_group.camera_borders['top']
 
 def Get_config():
     try:
@@ -234,7 +316,10 @@ def Get_config():
         f.close()
 
         #verification des valeurs
-        if not(isinstance(config["speed"], int) or isinstance(config["speed"], float)):
+        print(config)
+        if not (isinstance(config["speed"],int or float)) or (
+            not isinstance(config["res_l"], int) or config["res_l"] < 100) or (
+            not isinstance(config["res_h"], int) or config["res_h"] < 100):
             Write_config()
             return DEFAULT_CONFIG
         return config
@@ -247,7 +332,9 @@ def Write_config():
     f = open("config.txt", 'w')
     f.write(
         "#Recommende: 2,4,8,16 (16=deplacement par case)\n"+
-        "speed = 2"
+        "speed = 2\n"+
+        "res_h = 300\n"+
+        "res_l = 600"
     )
     f.close()
     
@@ -257,6 +344,6 @@ if __name__ == '__main__':
     # level = ["W"*100] + ["W"+"S"+" "*97+"W"] + ["W"+" "*98+"W"]*46 + ["W" + "E" + " "*97 + "W"] + ["W"*100]
     # level = ["W"*120] + ["W"+"S"+" "*117+"W"] + ["W"+" "*118+"W"]*46 + ["W" + "E" + " "*117 + "W"] + ["W"*120]
     lab = Lab(level)
-    camera_group = CameraGroup()
+    self.camera_group = CameraGroup()
     lab.ajout_mur()
     lab.Run()

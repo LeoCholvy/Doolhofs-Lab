@@ -123,6 +123,9 @@ class Maze:
         else: 
             self.choose_exit(fmaze)
 
+    def Get_fmaze(self):
+        return self.fmaze
+
     
 
         

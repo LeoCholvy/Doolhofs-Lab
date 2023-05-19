@@ -1,0 +1,4 @@
+#Recommende: 2,4,8,16 (16=deplacement par case)
+speed = 8
+res_h = 600
+res_l = 1000
