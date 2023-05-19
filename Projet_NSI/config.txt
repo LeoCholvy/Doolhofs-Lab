@@ -1,0 +1,2 @@
+#Recommende: 2,4,8,16 (16=deplacement par case)
+speed = 2
