@@ -77,6 +77,8 @@ class CameraGroup(pygame.sprite.Group):
 
         self.display_surface.blit(scaled_surf,scaled_rect)
 
+    def Set_zoom_scale(self, scale):
+        self.zoom_scale = scale
 DEFAULT_CONFIG = {"speed": 2,"res_h":300,"res_l":600, "hauteur": 30, "largeur": 30}
 
 # Class pour le carré orange
@@ -304,6 +306,11 @@ class Lab(object):
                 self.player.move(0, s)
             if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
                 self.moving = True
+        #ZOOM
+        if key[pygame.K_SPACE]:
+            self.camera_group.Set_zoom_scale(0.01)
+        else:
+            self.camera_group.Set_zoom_scale(1)
         self.camera_group.offset.x = self.camera_group.camera_rect.left - self.camera_group.camera_borders['left']
         self.camera_group.offset.y = self.camera_group.camera_rect.top - self.camera_group.camera_borders['top']
 
