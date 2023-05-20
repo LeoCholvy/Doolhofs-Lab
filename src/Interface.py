@@ -308,7 +308,7 @@ class Lab(object):
                 self.moving = True
         #ZOOM
         if key[pygame.K_SPACE]:
-            self.camera_group.Set_zoom_scale(0.01)
+            self.camera_group.Set_zoom_scale(0.25)
         else:
             self.camera_group.Set_zoom_scale(1)
         self.camera_group.offset.x = self.camera_group.camera_rect.left - self.camera_group.camera_borders['left']
