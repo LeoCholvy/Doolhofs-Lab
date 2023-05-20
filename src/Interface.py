@@ -77,7 +77,7 @@ class CameraGroup(pygame.sprite.Group):
 
         self.display_surface.blit(scaled_surf,scaled_rect)
 
-DEFAULT_CONFIG = {"speed": 2,"res_h":300,"res_l":600}
+DEFAULT_CONFIG = {"speed": 2,"res_h":300,"res_l":600, "hauteur": 30, "largeur": 30}
 
 # Class pour le carré orange
 class Player(pygame.sprite.Sprite):
@@ -146,14 +146,15 @@ class End(pygame.sprite.Sprite):
 class Lab(object):
 
 
-    def __init__(self, grille : list) -> None:
+    def __init__(self, grille : list, config = None) -> None:
         self.player_pos = None # si la grille ne contient pas "S"
         self.moving = False
         # Initialisation de pygame
         os.environ["SDL_VIDEO_CENTERED"] = "1"
         pygame.init()
 
-        config = Get_config()
+        if config == None:
+            config = Get_config()
         # const vistesse
         self.speed = config["speed"]
         self.res = (config["res_l"], config["res_h"])
@@ -316,10 +317,11 @@ def Get_config():
         f.close()
 
         #verification des valeurs
-        print(config)
         if not (isinstance(config["speed"],int or float)) or (
             not isinstance(config["res_l"], int) or config["res_l"] < 100) or (
-            not isinstance(config["res_h"], int) or config["res_h"] < 100):
+            not isinstance(config["res_h"], int) or config["res_h"] < 100) or (
+            not isinstance(config["hauteur"], int) or config["hauteur"] < 3) or (
+            not isinstance(config["largeur"], int) or config["largeur"] < 3):
             Write_config()
             return DEFAULT_CONFIG
         return config
@@ -334,7 +336,9 @@ def Write_config():
         "#Recommende: 2,4,8,16 (16=deplacement par case)\n"+
         "speed = 2\n"+
         "res_h = 300\n"+
-        "res_l = 600"
+        "res_l = 600\n"+
+        "hauteur = 30\n"+
+        "largeur = 30"
     )
     f.close()
     

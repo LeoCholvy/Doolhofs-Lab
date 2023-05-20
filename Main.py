@@ -1,9 +1,10 @@
 from src.maze_generator import Maze
-from src.Interface import Lab, CameraGroup
+from src.Interface import *
 
-maze = Maze(30,30)
+config = Get_config()
+maze = Maze(config["hauteur"], config["largeur"])
 level = maze.Get_fmaze()
-lab = Lab(level)
+lab = Lab(level, config)
 camera_group = CameraGroup(lab)
 lab.Set_Cam(camera_group)
 lab.ajout_mur()
