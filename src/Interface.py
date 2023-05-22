@@ -77,7 +77,7 @@ class CameraGroup(pygame.sprite.Group):
 
         self.display_surface.blit(scaled_surf,scaled_rect)
 
-DEFAULT_CONFIG = {"speed": 2,"res_h":300,"res_l":600, "hauteur": 30, "largeur": 30}
+DEFAULT_CONFIG = {"speed": 2,"res_h":300,"res_l":600, "taille":30}
 
 # Class pour le carré orange
 class Player(pygame.sprite.Sprite):
@@ -336,8 +336,7 @@ def Write_config():
         "speed = 2\n"+
         "res_h = 300\n"+
         "res_l = 600\n"+
-        "hauteur = 30\n"+
-        "largeur = 30"
+        "taille = 30"
     )
     f.close()
     
