@@ -320,8 +320,7 @@ def Get_config():
         if not (isinstance(config["speed"],int or float)) or (
             not isinstance(config["res_l"], int) or config["res_l"] < 100) or (
             not isinstance(config["res_h"], int) or config["res_h"] < 100) or (
-            not isinstance(config["hauteur"], int) or config["hauteur"] < 3) or (
-            not isinstance(config["largeur"], int) or config["largeur"] < 3):
+            not isinstance(config["taille"], int) or config["taille"] < 3):
             Write_config()
             return DEFAULT_CONFIG
         return config
