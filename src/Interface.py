@@ -78,10 +78,10 @@ class CameraGroup(pygame.sprite.Group):
 
         self.display_surface.blit(scaled_surf,scaled_rect)
 
-        for i in range(len(self.dust)):
-            if len(self.dust[i].particles) > 0:
-                self.dust[i].draw(win)
-                self.dust[i].update()
+        for i in range(len(self.lab.player.dust)):
+            if len(self.lab.player.dust[i].particles) > 0:
+                self.lab.player.dust[i].draw(win)
+                self.lab.player.dust[i].update()
 
 DEFAULT_CONFIG = {"speed": 2,"res_h":300,"res_l":600, "taille":30}
 
