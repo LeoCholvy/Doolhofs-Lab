@@ -3,11 +3,18 @@ import sys
 import pygame
 from src.maze_generator import Maze
 from src.particles import Particle, Dust
+from src.background import Fill, Couleur_alea
 
 class CameraGroup(pygame.sprite.Group):
     def __init__(self, lab):
         super().__init__()
         self.lab = lab
+
+        #couleurs background
+        self.colors = (
+            # Couleur_alea([175]*3,[255]*3), Couleur_alea([25]*3,[100]*3)
+            Couleur_alea(),Couleur_alea()
+        )
 
         self.display_surface = self.lab.surface
         self.offset = pygame.math.Vector2()
@@ -67,7 +74,9 @@ class CameraGroup(pygame.sprite.Group):
         self.center_target_camera(self.lab.player)
         self.box_target_camera(self.lab.player)
 
-        self.internal_surf.fill((50,0,255))
+        # self.internal_surf.fill((50,0,255))#ancien bg bleu moche
+        Fill(self.internal_surf, self.internal_surf_size, self.colors)
+
 		# active elements
         for sprite in sorted(self.sprites(),key = lambda sprite: sprite.rect.centery):
             offset_pos = sprite.rect.topleft - self.offset + self.internal_offset
@@ -80,7 +89,7 @@ class CameraGroup(pygame.sprite.Group):
 
         for i in range(len(self.lab.player.dust)):
             if len(self.lab.player.dust[i].particles) > 0:
-                self.lab.player.dust[i].pos = self.lab.player.dust[i].pos - self.offset + internal_offset
+                self.lab.player.dust[i].pos = self.lab.player.dust[i].pos - self.offset + self.internal_offset
                 self.lab.player.dust[i].draw(self.lab.screen)
                 self.lab.player.dust[i].update()
 
@@ -283,7 +292,8 @@ class Lab(object):
             self.Move()
             
             # Draw the scene
-            self.screen.fill((50, 0, 255))
+            # self.screen.fill((50, 0, 255))
+
             #for wall in self.walls:
                 #pygame.draw.rect(self.screen, (255, 255, 255), wall.rect)
                 #self.screen.blit(wall.image, (wall.pos[0], wall.pos[1]))
