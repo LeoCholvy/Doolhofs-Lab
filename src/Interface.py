@@ -47,7 +47,7 @@ class CameraGroup(pygame.sprite.Group):
             self.camera_rect.right = target.rect.right
         if target.rect.top < self.camera_rect.top:
             self.camera_rect.top = target.rect.top 
-        if target.rect.bottom > seslf.camera_rect.bottom:
+        if target.rect.bottom > self.camera_rect.bottom:
             self.camera_rect.bottom = target.rect.bottom
 
         self.offset.x = self.camera_rect.left - self.camera_borders['left']
@@ -78,10 +78,10 @@ class CameraGroup(pygame.sprite.Group):
 
         self.display_surface.blit(scaled_surf,scaled_rect)
 
-        for i in range(len(dust)):
-            if len(dust[i].particles) > 0:
-                dust[i].draw(win)
-                dust[i].update()
+        for i in range(len(self.dust)):
+            if len(self.dust[i].particles) > 0:
+                self.dust[i].draw(win)
+                self.dust[i].update()
 
 DEFAULT_CONFIG = {"speed": 2,"res_h":300,"res_l":600, "taille":30}
 
@@ -122,16 +122,16 @@ class Player(pygame.sprite.Sprite):
             if self.rect.colliderect(wall.rect):
                 if dx > 0: # Moving right; Hit the left side of the wall
                     self.rect.right = wall.rect.left
-                    self.dust.append(Dust(rect.midleft))
+                    self.self.dust.append(self.dust(rect.midleft))
                 if dx < 0: # Moving left; Hit the right side of the wall
                     self.rect.left = wall.rect.right
-                    self.dust.append(Dust(rect.midright))
+                    self.self.dust.append(self.dust(rect.midright))
                 if dy > 0: # Moving down; Hit the top side of the wall
                     self.rect.bottom = wall.rect.top
-                    self.dust.append(Dust(rect.midtop))
+                    self.self.dust.append(self.dust(rect.midtop))
                 if dy < 0: # Moving up; Hit the bottom side of the wall
                     self.rect.top = wall.rect.bottom
-                    self.dust.append(Dust(rect.midbottom))
+                    self.self.dust.append(self.dust(rect.midbottom))
 
 # Nice class to hold a wall rect
 class Wall(pygame.sprite.Sprite):
