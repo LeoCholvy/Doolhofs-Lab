@@ -1,5 +1,5 @@
 #Recommende: 2,4,8,16 (16=deplacement par case)
-speed = 5
-res_h = 300
-res_l = 600
+speed = 4
+res_h = 1000
+res_l = 1000
 taille = 30

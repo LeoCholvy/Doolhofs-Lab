@@ -80,6 +80,7 @@ class CameraGroup(pygame.sprite.Group):
 
         for i in range(len(self.lab.player.dust)):
             if len(self.lab.player.dust[i].particles) > 0:
+                self.lab.player.dust[i].pos = self.lab.player.dust[i].pos - self.offset + internal_offset
                 self.lab.player.dust[i].draw(self.lab.screen)
                 self.lab.player.dust[i].update()
 
@@ -95,6 +96,7 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image,(size,size))
         self.pos = pos
         self.dust = []
+        self.collide = False
 
         self.rect = self.image.get_rect()
         self.rect.move_ip(pos[0], pos[1])
@@ -108,6 +110,10 @@ class Player(pygame.sprite.Sprite):
         # Bouge chaque axes séparéments. Note that this checks for collisions both times.
         if dx != 0:
             self.move_single_axis(dx, 0)
+            if dx > 0:
+                self.dust.append(Dust(self.rect.midleft))
+            if dx < 0:
+                self.dust.append(Dust(self.rect.midright))
         if dy != 0:
             self.move_single_axis(0, dy)
     
@@ -116,22 +122,35 @@ class Player(pygame.sprite.Sprite):
         # Move the rect
         self.rect.x += dx
         self.rect.y += dy
+
+        if not self.collide:
+            if dx > 0:
+                self.dust.append(Dust(self.rect.midleft))
+            if dx < 0:
+                self.dust.append(Dust(self.rect.midright))
+            if dy > 0:
+                self.dust.append(Dust(self.rect.midtop))
+            if dy < 0:
+                self.dust.append(Dust(self.rect.midbottom))
+
+
+
+
  
         # If you collide with a wall, move out based on velocity
         for wall in self.walls:
             if self.rect.colliderect(wall.rect):
+                self.collide = True
                 if dx > 0: # Moving right; Hit the left side of the wall
                     self.rect.right = wall.rect.left
-                    self.dust.append(Dust(self.rect.midleft))
                 if dx < 0: # Moving left; Hit the right side of the wall
                     self.rect.left = wall.rect.right
-                    self.dust.append(Dust(self.rect.midright))
                 if dy > 0: # Moving down; Hit the top side of the wall
                     self.rect.bottom = wall.rect.top
-                    self.dust.append(Dust(self.rect.midtop))
                 if dy < 0: # Moving up; Hit the bottom side of the wall
                     self.rect.top = wall.rect.bottom
-                    self.dust.append(Dust(self.rect.midbottom))
+            else:
+                self.collide = False
 
 # Nice class to hold a wall rect
 class Wall(pygame.sprite.Sprite):

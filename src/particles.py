@@ -21,7 +21,7 @@ class Dust:
 	def __init__(self, pos):
 		self.pos = pos
 		self.particles = []
-		for i in range(100):
+		for i in range(1):
 			self.particles.append(Particle(self.pos))
 
 	def update(self):
