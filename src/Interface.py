@@ -80,7 +80,7 @@ class CameraGroup(pygame.sprite.Group):
 
         for i in range(len(self.lab.player.dust)):
             if len(self.lab.player.dust[i].particles) > 0:
-                self.lab.player.dust[i].draw(win)
+                self.lab.player.dust[i].draw(self.lab.screen)
                 self.lab.player.dust[i].update()
 
 DEFAULT_CONFIG = {"speed": 2,"res_h":300,"res_l":600, "taille":30}
@@ -122,16 +122,16 @@ class Player(pygame.sprite.Sprite):
             if self.rect.colliderect(wall.rect):
                 if dx > 0: # Moving right; Hit the left side of the wall
                     self.rect.right = wall.rect.left
-                    self.self.dust.append(self.dust(rect.midleft))
+                    self.dust.append(Dust(self.rect.midleft))
                 if dx < 0: # Moving left; Hit the right side of the wall
                     self.rect.left = wall.rect.right
-                    self.self.dust.append(self.dust(rect.midright))
+                    self.dust.append(Dust(self.rect.midright))
                 if dy > 0: # Moving down; Hit the top side of the wall
                     self.rect.bottom = wall.rect.top
-                    self.self.dust.append(self.dust(rect.midtop))
+                    self.dust.append(Dust(self.rect.midtop))
                 if dy < 0: # Moving up; Hit the bottom side of the wall
                     self.rect.top = wall.rect.bottom
-                    self.self.dust.append(self.dust(rect.midbottom))
+                    self.dust.append(Dust(self.rect.midbottom))
 
 # Nice class to hold a wall rect
 class Wall(pygame.sprite.Sprite):
