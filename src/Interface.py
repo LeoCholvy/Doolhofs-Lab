@@ -4,6 +4,8 @@ import pygame
 from src.maze_generator import Maze
 from src.particles import Particle, Dust
 from src.background import Fill, Couleur_alea
+from src.hunter import Hunter, Sound_win as Sound_win_hunter
+from time import sleep
 
 class CameraGroup(pygame.sprite.Group):
     def __init__(self, lab):
@@ -244,7 +246,8 @@ class Lab(object):
                 x = 0
 
         self.player = Player(self.walls, self.player_pos, self.player_size, self.camera_group) # Create the player
-        
+        self.hunter = Hunter(self.walls, self.player_pos, self.player_size, self.camera_group)
+
     def Calc_sizes(self):
         """Prend en paramètre une grille
         et calcule la taille de la fenètre (pixel)
@@ -313,6 +316,14 @@ class Lab(object):
                 pygame.quit()
                 sys.exit()
                 #TODO: fin du lab
+
+            # si sova (le hunter) ult dans le joueur
+            elif self.hunter.spawned and self.hunter.rect.colliderect(self.player.rect):
+                # TODO: mettre voice line "I AM THE HUNTER"
+                print("I AM THE HUNTER")
+                Sound_win_hunter()
+                pygame.quit()
+                sys.exit()
         pygame.quit()
 
     def Move(self):
@@ -321,12 +332,16 @@ class Lab(object):
         if not self.mode_deplacement_par_bloc:
             if key[pygame.K_LEFT]:
                 self.player.move(-s, 0)
+                self.hunter.pre_move(-s,0)
             if key[pygame.K_RIGHT]:
                 self.player.move(s, 0)
+                self.hunter.pre_move(s, 0)
             if key[pygame.K_UP]:
+                self.hunter.pre_move(0, -s)
                 self.player.move(0, -s)
             if key[pygame.K_DOWN]:
                 self.player.move(0, s)
+                self.hunter.pre_move(0, s)
         else:
             if self.moving == True:
                 if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
@@ -344,6 +359,10 @@ class Lab(object):
                 self.player.move(0, s)
             if key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN]:
                 self.moving = True
+
+        self.hunter.pre_move(0,0)
+
+
         self.camera_group.offset.x = self.camera_group.camera_rect.left - self.camera_group.camera_borders['left']
         self.camera_group.offset.y = self.camera_group.camera_rect.top - self.camera_group.camera_borders['top']
 
